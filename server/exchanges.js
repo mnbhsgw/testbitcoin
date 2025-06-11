@@ -19,7 +19,8 @@ class ExchangeAPI {
       coincheck: 'https://coincheck.com/api/ticker',
       zaif: 'https://api.zaif.jp/api/1/ticker/btc_jpy',
       gmo: 'https://api.coin.z.com/public/v1/ticker?symbol=BTC_JPY',
-      bitbank: 'https://public.bitbank.cc/btc_jpy/ticker'
+      bitbank: 'https://public.bitbank.cc/btc_jpy/ticker',
+      bitpoint: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=jpy'
     };
   }
 
@@ -104,13 +105,31 @@ class ExchangeAPI {
     }
   }
 
+  async getBitPointPrice() {
+    try {
+      const response = await axios.get(this.exchanges.bitpoint, { timeout: 5000 });
+      const price = response.data.bitcoin.jpy;
+      return {
+        exchange: 'BITPoint',
+        price: parseFloat(price),
+        bid: parseFloat(price), // CoinGecko doesn't provide bid/ask, using price as approximation
+        ask: parseFloat(price),
+        timestamp: getJapanTime()
+      };
+    } catch (error) {
+      console.error('BITPoint API Error:', error.message);
+      return null;
+    }
+  }
+
   async getAllPrices() {
     const promises = [
       this.getBitFlyerPrice(),
       this.getCoincheckPrice(),
       this.getZaifPrice(),
       this.getGMOPrice(),
-      this.getBitbankPrice()
+      this.getBitbankPrice(),
+      this.getBitPointPrice()
     ];
 
     const results = await Promise.allSettled(promises);
