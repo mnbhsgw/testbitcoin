@@ -4,7 +4,7 @@
 
 ## 機能
 
-- **リアルタイム価格監視**: bitFlyer、Coincheck、Zaifから5秒毎にBTC/JPY価格を取得
+- **リアルタイム価格監視**: bitFlyer、Coincheck、Zaif、GMOコイン、bitbankから5秒毎にBTC/JPY価格を取得
 - **アービトラージ検知**: 取引所間の価格差が1%以上の機会を自動検知
 - **リアルタイム表示**: WebSocketを使用したリアルタイム価格更新
 - **取引履歴**: 価格データとアービトラージ機会をSQLiteに保存
@@ -51,7 +51,7 @@ npm run client
 
 - **バックエンド**: Node.js, Express, WebSocket, SQLite
 - **フロントエンド**: React
-- **API**: bitFlyer、Coincheck、Zaif公開API
+- **API**: bitFlyer、Coincheck、Zaif、GMOコイン、bitbank公開API
 
 ## 設定
 
