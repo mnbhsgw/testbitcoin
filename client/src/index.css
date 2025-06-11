@@ -1,0 +1,262 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+  height: 100vh;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px;
+  height: 100vh;
+  overflow-y: auto;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 15px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 0;
+  color: #333;
+}
+
+.header h1 {
+  margin: 5px 0;
+  font-size: 1.5rem;
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.status.connected {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status.disconnected {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.price-table {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 0;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.price-table h3 {
+  margin: 0;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+tr:hover {
+  background-color: #f8f9fa;
+}
+
+.price {
+  font-weight: bold;
+  color: #28a745;
+}
+
+.price.bid {
+  color: #007bff;
+}
+
+.price.ask {
+  color: #dc3545;
+}
+
+.bid-ask-info {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 5px;
+}
+
+.opportunities {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.opportunities h3 {
+  margin: 0;
+  padding: 10px 15px;
+  background-color: #ffc107;
+  color: #333;
+  font-size: 1rem;
+}
+
+.opportunity-item {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+
+.opportunity-item:last-child {
+  border-bottom: none;
+}
+
+.opportunity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.percentage {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #e83e8c;
+}
+
+.profit-info {
+  font-size: 0.85em;
+  color: #666;
+}
+
+.no-opportunities {
+  padding: 15px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.last-update {
+  text-align: center;
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 0;
+  padding: 10px;
+}
+
+.chart-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 0;
+  overflow: hidden;
+  min-height: 300px;
+  max-height: 400px;
+}
+
+.chart-section h3 {
+  margin: 0;
+  padding: 10px 15px;
+  background-color: #28a745;
+  color: white;
+  font-size: 1rem;
+}
+
+.price-chart {
+  padding: 15px;
+  height: calc(100% - 50px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-controls {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-button {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.export-button:hover {
+  background-color: #0056b3;
+  text-decoration: none;
+  color: white;
+}
+
+.chart-controls label {
+  font-weight: 600;
+  color: #333;
+}
+
+.chart-controls select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+}
+
+.chart-controls select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.chart-container {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
