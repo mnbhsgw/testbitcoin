@@ -110,15 +110,47 @@ class Database {
 
   savePrices(prices) {
     return new Promise((resolve, reject) => {
-      const stmt = this.db.prepare("INSERT INTO price_history (exchange, price, bid, ask, timestamp) VALUES (?, ?, ?, ?, ?)");
-      
-      for (const price of prices) {
-        stmt.run([price.exchange, price.price, price.bid, price.ask, price.timestamp]);
+      if (prices.length === 0) {
+        resolve();
+        return;
       }
-      
-      stmt.finalize((err) => {
-        if (err) reject(err);
-        else resolve();
+
+      // Use transaction for better performance and data consistency
+      this.db.serialize(() => {
+        this.db.run("BEGIN TRANSACTION");
+        
+        const stmt = this.db.prepare("INSERT INTO price_history (exchange, price, bid, ask, timestamp) VALUES (?, ?, ?, ?, ?)");
+        
+        let completed = 0;
+        let hasError = false;
+        
+        for (const price of prices) {
+          if (hasError) break;
+          
+          stmt.run([price.exchange, price.price, price.bid, price.ask, price.timestamp], (err) => {
+            if (err && !hasError) {
+              hasError = true;
+              this.db.run("ROLLBACK");
+              reject(err);
+              return;
+            }
+            
+            completed++;
+            if (completed === prices.length && !hasError) {
+              stmt.finalize((finalizeErr) => {
+                if (finalizeErr) {
+                  this.db.run("ROLLBACK");
+                  reject(finalizeErr);
+                } else {
+                  this.db.run("COMMIT", (commitErr) => {
+                    if (commitErr) reject(commitErr);
+                    else resolve();
+                  });
+                }
+              });
+            }
+          });
+        }
       });
     });
   }

@@ -84,58 +84,76 @@ const PriceChart = ({ prices, ws }) => {
     }
   };
 
-  // リアルタイムデータでチャートを更新
+  // リアルタイムデータでチャートを更新（メモリリーク対策済み）
   const updateChartWithRealtime = (newPrices) => {
     if (!newPrices || newPrices.length === 0) return;
     
     const now = new Date();
-    const newRealtimeData = { ...realtimeData };
+    const MAX_REALTIME_POINTS = 100; // リアルタイムデータの最大保持数
     
-    newPrices.forEach(price => {
-      if (!newRealtimeData[price.exchange]) {
-        newRealtimeData[price.exchange] = [];
-      }
+    setRealtimeData(prevRealtimeData => {
+      const newRealtimeData = { ...prevRealtimeData };
       
-      // 最新のデータポイントを追加
-      newRealtimeData[price.exchange].push({
-        x: now,
-        y: price.price
+      newPrices.forEach(price => {
+        if (!newRealtimeData[price.exchange]) {
+          newRealtimeData[price.exchange] = [];
+        }
+        
+        // 最新のデータポイントを追加
+        newRealtimeData[price.exchange].push({
+          x: now,
+          y: price.price
+        });
+        
+        // データ数制限とメモリ効率化
+        const timeThreshold = new Date(now.getTime() - timeRange * 60 * 60 * 1000);
+        newRealtimeData[price.exchange] = newRealtimeData[price.exchange]
+          .filter(point => point.x > timeThreshold)
+          .slice(-MAX_REALTIME_POINTS); // 最新のN個のみ保持
       });
       
-      // 古いデータを削除（直近1時間分のみ保持）
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-      newRealtimeData[price.exchange] = newRealtimeData[price.exchange]
-        .filter(point => point.x > oneHourAgo);
+      return newRealtimeData;
     });
     
-    setRealtimeData(newRealtimeData);
-    
-    // 現在のチャートデータにリアルタイムデータを追加
+    // チャートデータを効率的に更新
     setChartData(prevData => {
+      if (!prevData.datasets || prevData.datasets.length === 0) {
+        return prevData;
+      }
+      
       const updatedDatasets = prevData.datasets.map(dataset => {
         const exchangeName = dataset.label;
-        const realtimePoints = newRealtimeData[exchangeName] || [];
+        const realtimePoints = realtimeData[exchangeName] || [];
         
-        // 既存のデータと新しいリアルタイムデータを結合
-        const allData = [...dataset.data];
+        if (realtimePoints.length === 0) {
+          return dataset;
+        }
+        
+        // 既存データをコピーして更新（mutation回避）
+        let updatedData = [...dataset.data];
+        
+        // 重複チェック用のタイムスタンプセット（パフォーマンス向上）
+        const existingTimes = new Set(updatedData.map(p => Math.floor(p.x.getTime() / 5000)));
+        
         realtimePoints.forEach(point => {
-          // 重複を避けるため、同じ時刻のデータは更新
-          const existingIndex = allData.findIndex(p => 
-            Math.abs(p.x.getTime() - point.x.getTime()) < 5000 // 5秒以内なら同じとみなす
-          );
-          if (existingIndex >= 0) {
-            allData[existingIndex] = point;
-          } else {
-            allData.push(point);
+          const timeKey = Math.floor(point.x.getTime() / 5000);
+          
+          if (!existingTimes.has(timeKey)) {
+            updatedData.push(point);
+            existingTimes.add(timeKey);
           }
         });
         
-        // 時刻順にソート
-        allData.sort((a, b) => a.x.getTime() - b.x.getTime());
+        // 時刻制限内のデータのみ保持（メモリ効率化）
+        const timeThreshold = new Date(now.getTime() - timeRange * 60 * 60 * 1000);
+        updatedData = updatedData
+          .filter(point => point.x > timeThreshold)
+          .sort((a, b) => a.x.getTime() - b.x.getTime())
+          .slice(-500); // チャート表示用に最大500ポイント
         
         return {
           ...dataset,
-          data: allData
+          data: updatedData
         };
       });
       
@@ -157,8 +175,30 @@ const PriceChart = ({ prices, ws }) => {
     
     fetchPriceHistory();
     const interval = setInterval(fetchPriceHistory, 30000); // 30秒ごとに更新
-    return () => clearInterval(interval);
+    
+    // クリーンアップでメモリリークを防止
+    return () => {
+      clearInterval(interval);
+      // チャートインスタンスの破棄
+      if (chartRef.current) {
+        chartRef.current.destroy?.();
+      }
+    };
   }, [timeRange]);
+
+  // コンポーネントアンマウント時のクリーンアップ
+  useEffect(() => {
+    return () => {
+      // すべてのstateをクリア
+      setChartData({ datasets: [] });
+      setRealtimeData({});
+      
+      // チャートインスタンスの完全破棄
+      if (chartRef.current) {
+        chartRef.current.destroy?.();
+      }
+    };
+  }, []);
 
   const calculateTimeRange = () => {
     const now = new Date();

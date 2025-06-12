@@ -5,26 +5,27 @@ const http = require('http');
 const ExchangeAPI = require('./exchanges');
 const Database = require('./database');
 const ArbitrageDetector = require('./arbitrage');
-
-function getJapanTime() {
-  return new Date().toLocaleString('ja-JP', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-').replace(/ /g, 'T');
-}
+const { getJapanTime } = require('./utils');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// WebSocket server with connection limits
+const wss = new WebSocket.Server({ 
+  server,
+  maxPayload: 16 * 1024, // 16KB max payload
+  clientTracking: true
+});
 
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// CORS configuration - restrict in production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']
+    : true,
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const exchangeAPI = new ExchangeAPI();
@@ -57,9 +58,24 @@ app.get('/api/history', async (req, res) => {
   }
 });
 
-app.get('/api/price-history', async (req, res) => {
+// Input validation middleware
+function validateHoursParam(req, res, next) {
+  const hours = req.query.hours;
+  if (hours !== undefined) {
+    const parsed = parseInt(hours);
+    if (isNaN(parsed) || parsed < 1 || parsed > 168) { // Max 1 week
+      return res.status(400).json({ error: 'Invalid hours parameter. Must be between 1 and 168.' });
+    }
+    req.validatedHours = parsed;
+  } else {
+    req.validatedHours = 24;
+  }
+  next();
+}
+
+app.get('/api/price-history', validateHoursParam, async (req, res) => {
   try {
-    const hours = parseInt(req.query.hours) || 24;
+    const hours = req.validatedHours;
     const priceHistory = await database.getPriceHistory(hours);
     
     res.json({
@@ -81,9 +97,9 @@ app.delete('/api/clear-data', async (req, res) => {
   }
 });
 
-app.get('/api/export-csv', async (req, res) => {
+app.get('/api/export-csv', validateHoursParam, async (req, res) => {
   try {
-    const hours = parseInt(req.query.hours) || 24;
+    const hours = req.validatedHours;
     const priceHistory = await database.getPriceHistory(hours);
     
     // CSV header
@@ -103,8 +119,20 @@ app.get('/api/export-csv', async (req, res) => {
   }
 });
 
-wss.on('connection', (ws) => {
-  console.log('Client connected via WebSocket');
+// Track connections for rate limiting
+let connectionCount = 0;
+const MAX_CONNECTIONS = 50;
+
+wss.on('connection', (ws, req) => {
+  connectionCount++;
+  
+  if (connectionCount > MAX_CONNECTIONS) {
+    ws.close(1013, 'Server overloaded');
+    connectionCount--;
+    return;
+  }
+  
+  console.log(`Client connected via WebSocket (${connectionCount}/${MAX_CONNECTIONS})`);
   
   ws.send(JSON.stringify({
     type: 'initial_data',
@@ -113,7 +141,8 @@ wss.on('connection', (ws) => {
   }));
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    connectionCount--;
+    console.log(`Client disconnected (${connectionCount}/${MAX_CONNECTIONS})`);
   });
 });
 

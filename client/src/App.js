@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import PriceChart from './PriceChart';
+import ErrorBoundary from './ErrorBoundary';
 
 function App() {
   const [prices, setPrices] = useState([]);
@@ -80,7 +81,8 @@ function App() {
   };
 
   return (
-    <div className="container">
+    <ErrorBoundary>
+      <div className="container">
       <div className="header">
         <h1>🪙 BTC アービトラージ監視システム</h1>
         <div className={`status ${connected ? 'connected' : 'disconnected'}`}>
@@ -179,7 +181,8 @@ function App() {
           最終更新: {lastUpdate}
         </div>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 
