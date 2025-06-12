@@ -6,8 +6,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f5f5f5;
-  height: 100vh;
-  overflow: hidden;
 }
 
 code {
@@ -15,14 +13,103 @@ code {
     monospace;
 }
 
+/* Error Boundary Styles */
+.error-boundary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+
+.error-boundary-content {
+  max-width: 600px;
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.error-boundary-content h2 {
+  color: #dc3545;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.error-boundary-content p {
+  color: #6c757d;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.error-details {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.error-details summary {
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.error-stack {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 15px;
+  font-size: 0.8rem;
+  color: #495057;
+  overflow: auto;
+  white-space: pre-wrap;
+  max-height: 200px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.error-reload-btn,
+.error-retry-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.error-reload-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.error-reload-btn:hover {
+  background-color: #0056b3;
+}
+
+.error-retry-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.error-retry-btn:hover {
+  background-color: #545b62;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 10px;
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
   display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  grid-template-rows: auto auto auto 1fr auto;
   gap: 15px;
 }
 
@@ -122,7 +209,8 @@ tr:hover {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   margin-bottom: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: none;
 }
 
 .opportunities h3 {
@@ -140,6 +228,11 @@ tr:hover {
   border-left: 4px solid #ffc107;
 }
 
+.opportunity-item.unprofitable {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+}
+
 .opportunity-item:last-child {
   border-bottom: none;
 }
@@ -151,14 +244,94 @@ tr:hover {
   margin-bottom: 5px;
 }
 
+.percentage-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .percentage {
-  font-size: 1.2em;
+  font-size: 1em;
   font-weight: bold;
-  color: #e83e8c;
+}
+
+.percentage.gross {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.percentage.net.profitable {
+  color: #28a745;
+  font-size: 1.1em;
+}
+
+.percentage.net.unprofitable {
+  color: #dc3545;
+  font-size: 1.1em;
 }
 
 .profit-info {
   font-size: 0.85em;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.net-profit-info {
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.net-profit-info .label {
+  font-weight: bold;
+  color: #333;
+  margin-right: 8px;
+}
+
+.net-profit.profitable {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.net-profit.unprofitable {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.total-fees {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.fee-breakdown {
+  margin-top: 8px;
+  font-size: 0.8em;
+}
+
+.fee-breakdown summary {
+  cursor: pointer;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.fee-breakdown summary:hover {
+  text-decoration: underline;
+}
+
+.fee-details {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.fee-details div {
+  margin-bottom: 4px;
   color: #666;
 }
 
@@ -184,8 +357,7 @@ tr:hover {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   margin-bottom: 0;
   overflow: hidden;
-  min-height: 300px;
-  max-height: 400px;
+  height: 350px;
 }
 
 .chart-section h3 {

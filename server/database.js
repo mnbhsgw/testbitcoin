@@ -31,6 +31,10 @@ class Database {
           price_to REAL NOT NULL,
           price_difference REAL NOT NULL,
           percentage_difference REAL NOT NULL,
+          net_profit REAL,
+          net_profit_percentage REAL,
+          total_fees REAL,
+          is_profitable_after_fees BOOLEAN,
           timestamp TEXT NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -60,20 +64,93 @@ class Database {
           });
         }
       });
+
+      // Migration: Add fee-related columns to arbitrage_opportunities if they don't exist
+      this.db.all("PRAGMA table_info(arbitrage_opportunities)", (err, columns) => {
+        if (err) {
+          console.error('Error checking arbitrage_opportunities table info:', err);
+          return;
+        }
+        
+        const hasNetProfit = columns.some(col => col.name === 'net_profit');
+        const hasNetProfitPercentage = columns.some(col => col.name === 'net_profit_percentage');
+        const hasTotalFees = columns.some(col => col.name === 'total_fees');
+        const hasProfitableFlag = columns.some(col => col.name === 'is_profitable_after_fees');
+        
+        if (!hasNetProfit) {
+          this.db.run("ALTER TABLE arbitrage_opportunities ADD COLUMN net_profit REAL", (err) => {
+            if (err) console.error('Error adding net_profit column:', err);
+            else console.log('Added net_profit column to arbitrage_opportunities table');
+          });
+        }
+        
+        if (!hasNetProfitPercentage) {
+          this.db.run("ALTER TABLE arbitrage_opportunities ADD COLUMN net_profit_percentage REAL", (err) => {
+            if (err) console.error('Error adding net_profit_percentage column:', err);
+            else console.log('Added net_profit_percentage column to arbitrage_opportunities table');
+          });
+        }
+
+        if (!hasTotalFees) {
+          this.db.run("ALTER TABLE arbitrage_opportunities ADD COLUMN total_fees REAL", (err) => {
+            if (err) console.error('Error adding total_fees column:', err);
+            else console.log('Added total_fees column to arbitrage_opportunities table');
+          });
+        }
+
+        if (!hasProfitableFlag) {
+          this.db.run("ALTER TABLE arbitrage_opportunities ADD COLUMN is_profitable_after_fees BOOLEAN", (err) => {
+            if (err) console.error('Error adding is_profitable_after_fees column:', err);
+            else console.log('Added is_profitable_after_fees column to arbitrage_opportunities table');
+          });
+        }
+      });
     });
   }
 
   savePrices(prices) {
     return new Promise((resolve, reject) => {
-      const stmt = this.db.prepare("INSERT INTO price_history (exchange, price, bid, ask, timestamp) VALUES (?, ?, ?, ?, ?)");
-      
-      for (const price of prices) {
-        stmt.run([price.exchange, price.price, price.bid, price.ask, price.timestamp]);
+      if (prices.length === 0) {
+        resolve();
+        return;
       }
-      
-      stmt.finalize((err) => {
-        if (err) reject(err);
-        else resolve();
+
+      // Use transaction for better performance and data consistency
+      this.db.serialize(() => {
+        this.db.run("BEGIN TRANSACTION");
+        
+        const stmt = this.db.prepare("INSERT INTO price_history (exchange, price, bid, ask, timestamp) VALUES (?, ?, ?, ?, ?)");
+        
+        let completed = 0;
+        let hasError = false;
+        
+        for (const price of prices) {
+          if (hasError) break;
+          
+          stmt.run([price.exchange, price.price, price.bid, price.ask, price.timestamp], (err) => {
+            if (err && !hasError) {
+              hasError = true;
+              this.db.run("ROLLBACK");
+              reject(err);
+              return;
+            }
+            
+            completed++;
+            if (completed === prices.length && !hasError) {
+              stmt.finalize((finalizeErr) => {
+                if (finalizeErr) {
+                  this.db.run("ROLLBACK");
+                  reject(finalizeErr);
+                } else {
+                  this.db.run("COMMIT", (commitErr) => {
+                    if (commitErr) reject(commitErr);
+                    else resolve();
+                  });
+                }
+              });
+            }
+          });
+        }
       });
     });
   }
@@ -82,8 +159,9 @@ class Database {
     return new Promise((resolve, reject) => {
       const stmt = this.db.prepare(`
         INSERT INTO arbitrage_opportunities 
-        (exchange_from, exchange_to, price_from, price_to, price_difference, percentage_difference, timestamp) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (exchange_from, exchange_to, price_from, price_to, price_difference, percentage_difference, 
+         net_profit, net_profit_percentage, total_fees, is_profitable_after_fees, timestamp) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       stmt.run([
@@ -93,6 +171,10 @@ class Database {
         opportunity.priceTo,
         opportunity.priceDifference,
         opportunity.percentageDifference,
+        opportunity.netProfit || null,
+        opportunity.netProfitPercentage || null,
+        opportunity.totalFees || null,
+        opportunity.isProfitableAfterFees || false,
         opportunity.timestamp
       ], (err) => {
         if (err) reject(err);
