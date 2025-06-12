@@ -67,3 +67,10 @@ coverage/
 
 # nyc test coverage
 .nyc_output
+
+# Test results and logs
+test-results.log
+test-report.json
+
+# Jest cache
+.jest/
