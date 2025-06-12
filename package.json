@@ -1,24 +1,55 @@
 {
   "name": "btc-arbitrage-webapp",
-  "version": "1.0.0",
-  "description": "Bitcoin arbitrage monitoring web application",
+  "version": "2.0.0",
+  "description": "Bitcoin arbitrage monitoring web application with comprehensive testing",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
     "install-deps": "npm install && cd client && npm install",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "test": "node tests/test-runner.js unit",
+    "test:unit": "node tests/test-runner.js unit",
+    "test:integration": "node tests/test-runner.js integration",
+    "test:performance": "node tests/test-runner.js performance",
+    "test:external-api": "node tests/test-runner.js external-api",
+    "test:coverage": "node tests/test-runner.js coverage",
+    "test:watch": "node tests/test-runner.js watch",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:performance",
+    "test:cleanup": "node tests/test-runner.js --cleanup",
+    "test:check-server": "node tests/test-runner.js --check-server",
+    "start": "node server/index.js",
+    "lint": "eslint server/ --ext .js",
+    "lint:fix": "eslint server/ --ext .js --fix"
   },
+  "keywords": [
+    "bitcoin",
+    "arbitrage",
+    "cryptocurrency",
+    "trading",
+    "real-time",
+    "websocket",
+    "monitoring"
+  ],
+  "author": "Bitcoin Arbitrage Team",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
     "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "sqlite3": "^5.1.6",
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.50.0",
+    "jest": "^30.0.0",
     "nodemon": "^3.0.2",
-    "concurrently": "^8.2.2"
+    "supertest": "^7.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
