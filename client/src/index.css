@@ -6,8 +6,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f5f5f5;
-  height: 100vh;
-  overflow: hidden;
 }
 
 code {
@@ -19,10 +17,9 @@ code {
   max-width: 1200px;
   margin: 0 auto;
   padding: 10px;
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
   display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  grid-template-rows: auto auto auto 1fr auto;
   gap: 15px;
 }
 
@@ -122,7 +119,8 @@ tr:hover {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   margin-bottom: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: none;
 }
 
 .opportunities h3 {
@@ -140,6 +138,11 @@ tr:hover {
   border-left: 4px solid #ffc107;
 }
 
+.opportunity-item.unprofitable {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+}
+
 .opportunity-item:last-child {
   border-bottom: none;
 }
@@ -151,14 +154,94 @@ tr:hover {
   margin-bottom: 5px;
 }
 
+.percentage-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .percentage {
-  font-size: 1.2em;
+  font-size: 1em;
   font-weight: bold;
-  color: #e83e8c;
+}
+
+.percentage.gross {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.percentage.net.profitable {
+  color: #28a745;
+  font-size: 1.1em;
+}
+
+.percentage.net.unprofitable {
+  color: #dc3545;
+  font-size: 1.1em;
 }
 
 .profit-info {
   font-size: 0.85em;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.net-profit-info {
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.net-profit-info .label {
+  font-weight: bold;
+  color: #333;
+  margin-right: 8px;
+}
+
+.net-profit.profitable {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.net-profit.unprofitable {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.total-fees {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.fee-breakdown {
+  margin-top: 8px;
+  font-size: 0.8em;
+}
+
+.fee-breakdown summary {
+  cursor: pointer;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.fee-breakdown summary:hover {
+  text-decoration: underline;
+}
+
+.fee-details {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.fee-details div {
+  margin-bottom: 4px;
   color: #666;
 }
 
@@ -184,8 +267,7 @@ tr:hover {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   margin-bottom: 0;
   overflow: hidden;
-  min-height: 300px;
-  max-height: 400px;
+  height: 350px;
 }
 
 .chart-section h3 {

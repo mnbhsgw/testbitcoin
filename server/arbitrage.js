@@ -1,3 +1,5 @@
+const FeeCalculator = require('./fees');
+
 function getJapanTime() {
   return new Date().toLocaleString('ja-JP', {
     timeZone: 'Asia/Tokyo',
@@ -14,6 +16,7 @@ class ArbitrageDetector {
   constructor(database) {
     this.db = database;
     this.threshold = 0.1; // 0.1% threshold for arbitrage opportunities
+    this.feeCalculator = new FeeCalculator();
   }
 
   detectArbitrageOpportunities(prices) {
@@ -31,6 +34,17 @@ class ArbitrageDetector {
           const priceDiff = exchange2.bid - exchange1.ask;
           const percentageDiff = (priceDiff / exchange1.ask) * 100;
           
+          // Calculate fee-adjusted profit for 1 BTC
+          const feeAnalysis = this.feeCalculator.calculateArbitrageCosts(
+            exchange1.exchange,
+            exchange2.exchange,
+            1, // 1 BTC
+            exchange1.ask,
+            exchange2.bid
+          );
+          
+          const netProfitPercentage = (feeAnalysis.netProfit / exchange1.ask) * 100;
+          
           if (percentageDiff >= this.threshold) {
             const opportunity = {
               exchangeFrom: exchange1.exchange,
@@ -44,7 +58,13 @@ class ArbitrageDetector {
               priceDifference: priceDiff,
               percentageDifference: percentageDiff,
               timestamp: getJapanTime(),
-              profit: priceDiff
+              profit: priceDiff,
+              // 手数料を考慮した実際の利益
+              netProfit: feeAnalysis.netProfit,
+              netProfitPercentage: netProfitPercentage,
+              totalFees: feeAnalysis.totalCosts.total,
+              feeBreakdown: feeAnalysis.costBreakdown,
+              isProfitableAfterFees: feeAnalysis.netProfit > 0
             };
             
             opportunities.push(opportunity);
@@ -60,6 +80,17 @@ class ArbitrageDetector {
           const priceDiff = exchange1.bid - exchange2.ask;
           const percentageDiff = (priceDiff / exchange2.ask) * 100;
           
+          // Calculate fee-adjusted profit for 1 BTC
+          const feeAnalysis = this.feeCalculator.calculateArbitrageCosts(
+            exchange2.exchange,
+            exchange1.exchange,
+            1, // 1 BTC
+            exchange2.ask,
+            exchange1.bid
+          );
+          
+          const netProfitPercentage = (feeAnalysis.netProfit / exchange2.ask) * 100;
+          
           if (percentageDiff >= this.threshold) {
             const opportunity = {
               exchangeFrom: exchange2.exchange,
@@ -73,7 +104,13 @@ class ArbitrageDetector {
               priceDifference: priceDiff,
               percentageDifference: percentageDiff,
               timestamp: getJapanTime(),
-              profit: priceDiff
+              profit: priceDiff,
+              // 手数料を考慮した実際の利益
+              netProfit: feeAnalysis.netProfit,
+              netProfitPercentage: netProfitPercentage,
+              totalFees: feeAnalysis.totalCosts.total,
+              feeBreakdown: feeAnalysis.costBreakdown,
+              isProfitableAfterFees: feeAnalysis.netProfit > 0
             };
             
             opportunities.push(opportunity);
@@ -86,7 +123,14 @@ class ArbitrageDetector {
       }
     }
     
-    return opportunities.sort((a, b) => b.percentageDifference - a.percentageDifference);
+    // Sort by net profit (after fees) instead of gross percentage difference
+    return opportunities.sort((a, b) => {
+      // First sort by profitability after fees, then by net profit amount
+      if (a.isProfitableAfterFees !== b.isProfitableAfterFees) {
+        return b.isProfitableAfterFees - a.isProfitableAfterFees;
+      }
+      return b.netProfit - a.netProfit;
+    });
   }
 
   formatOpportunityMessage(opportunity) {
