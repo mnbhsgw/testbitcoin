@@ -29,7 +29,7 @@ const PriceChart = ({ prices, ws }) => {
   const [chartData, setChartData] = useState({
     datasets: []
   });
-  const [timeRange, setTimeRange] = useState(1);
+  const [timeRange, setTimeRange] = useState(24);
   const [realtimeData, setRealtimeData] = useState({});
   const chartRef = useRef();
 
